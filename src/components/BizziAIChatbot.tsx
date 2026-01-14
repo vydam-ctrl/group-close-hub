@@ -24,7 +24,9 @@ import {
     Line,
     PieChart,
     Pie,
-    Cell
+    Cell,
+    ReferenceLine,
+    Legend
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { bizziAIQuestions, ChatMessage } from '@/data/bizziAIMock';
@@ -40,12 +42,34 @@ interface Message {
         columns: string[];
         rows: (string | number)[][];
     };
+    tables?: {
+        title?: string;
+        columns: string[];
+        rows: (string | number)[][];
+    }[];
     insight?: string;
     chartSuggestion?: {
         type: string;
         description: string;
+        xAxis?: string;
+        yAxis?: string;
+        highlight?: string;
+        threshold?: string;
+        sort?: string;
+        series?: { key: string; name: string; color?: string }[];
     };
     chartData?: any[];
+    charts?: {
+        suggestion: {
+            type: string;
+            description: string;
+            xAxis?: string;
+            yAxis?: string;
+            threshold?: string;
+            series?: { key: string; name: string; color?: string }[];
+        };
+        data: any[];
+    }[];
     showChart?: boolean;
     isTyping?: boolean;
 }
@@ -96,12 +120,14 @@ export function BizziAIChatbot({ context = 'consolidated' }: BizziAIChatbotProps
                 const botMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     type: 'bot',
-                    text: (matchedQuestion as any).answer || (matchedQuestion as any).answerText,
+                    text: (matchedQuestion as any).answerText || (matchedQuestion as any).answer || matchedQuestion.question,
                     answerType: (matchedQuestion as any).answerType,
                     tableData: (matchedQuestion as any).tableData,
+                    tables: (matchedQuestion as any).tables,
                     insight: (matchedQuestion as any).insight,
                     chartSuggestion: (matchedQuestion as any).chartSuggestion,
                     chartData: (matchedQuestion as any).chartData,
+                    charts: (matchedQuestion as any).charts,
                     showChart: false
                 };
                 setMessages(prev => [...prev, botMsg]);
@@ -221,6 +247,32 @@ export function BizziAIChatbot({ context = 'consolidated' }: BizziAIChatbotProps
                                             </div>
                                         )}
 
+                                        {msg.tables && msg.tables.map((table, tIdx) => (
+                                            <div key={tIdx} className="mt-4 first:mt-2">
+                                                {table.title && <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1.5 ml-1">{table.title}</p>}
+                                                <div className="overflow-x-auto rounded-lg border border-border">
+                                                    <table className="w-full text-[11px] text-left">
+                                                        <thead className="bg-slate-100 font-bold text-slate-700">
+                                                            <tr>
+                                                                {table.columns.map((col, i) => (
+                                                                    <th key={i} className="px-3 py-2 border-b border-border text-[10px] uppercase tracking-wider">{col}</th>
+                                                                ))}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-border">
+                                                            {table.rows.map((row, i) => (
+                                                                <tr key={i} className="bg-white hover:bg-slate-50 transition-colors">
+                                                                    {row.map((cell, j) => (
+                                                                        <td key={j} className="px-3 py-2 whitespace-nowrap font-medium text-slate-600">{cell}</td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        ))}
+
                                         {msg.insight && (
                                             <div className="mt-3 flex gap-2 p-3 bg-indigo-50/50 text-indigo-900 rounded-xl border border-indigo-100 italic text-xs font-medium">
                                                 <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" />
@@ -241,54 +293,77 @@ export function BizziAIChatbot({ context = 'consolidated' }: BizziAIChatbotProps
                                                         onClick={() => toggleChart(msg.id)}
                                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold hover:opacity-90 transition-all shadow-sm active:scale-95"
                                                     >
-                                                        {msg.showChart ? "Hide Chart" : "View Chart"}
+                                                        {msg.showChart ? "Hide Chart" : (msg.charts ? "View Analysis" : "View Chart")}
                                                     </button>
                                                 </div>
 
-                                                {msg.showChart && msg.chartData && (
-                                                    <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl animate-in fade-in zoom-in-95 duration-200">
-                                                        <p className="text-[11px] font-bold text-slate-700 mb-4">{msg.chartSuggestion.description}</p>
-                                                        <div className="h-[200px] w-full">
-                                                            <ResponsiveContainer width="100%" height="100%">
-                                                                {msg.chartSuggestion.type === 'bar' ? (
-                                                                    <BarChart data={msg.chartData}>
-                                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                                        <XAxis dataKey={msg.chartData[0].month ? "month" : "name"} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
-                                                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
-                                                                        <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
-                                                                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                                                    </BarChart>
-                                                                ) : msg.chartSuggestion.type === 'line' ? (
-                                                                    <LineChart data={msg.chartData}>
-                                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
-                                                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
-                                                                        <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
-                                                                        <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                                                                        {msg.chartSuggestion.type === 'line' && (
-                                                                            <Line type="monotone" dataKey="threshold" stroke="#F87171" strokeDasharray="5 5" strokeWidth={1} dot={false} />
-                                                                        )}
-                                                                    </LineChart>
-                                                                ) : (msg.chartSuggestion.type === 'pie' || msg.chartSuggestion.type === 'donut') ? (
-                                                                    <PieChart>
-                                                                        <Pie
-                                                                            data={msg.chartData}
-                                                                            cx="50%"
-                                                                            cy="50%"
-                                                                            innerRadius={msg.chartSuggestion.type === 'donut' ? 40 : 0}
-                                                                            outerRadius={70}
-                                                                            paddingAngle={5}
-                                                                            dataKey="value"
-                                                                        >
-                                                                            {msg.chartData.map((entry, index) => (
-                                                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                                            ))}
-                                                                        </Pie>
-                                                                        <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
-                                                                    </PieChart>
-                                                                ) : null}
-                                                            </ResponsiveContainer>
-                                                        </div>
+                                                {msg.showChart && (
+                                                    <div className="space-y-4">
+                                                        {(msg.charts || (msg.chartSuggestion && msg.chartData ? [{ suggestion: msg.chartSuggestion, data: msg.chartData }] : [])).map((chart, idx) => (
+                                                            <div key={idx} className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                                                                <p className="text-[11px] font-bold text-slate-700 mb-4">{chart.suggestion.description}</p>
+                                                                <div className="h-[200px] w-full">
+                                                                    <ResponsiveContainer width="100%" height="100%">
+                                                                        {chart.suggestion.type === 'bar' ? (
+                                                                            <BarChart data={chart.data}>
+                                                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                                                <XAxis dataKey={chart.suggestion.xAxis || (chart.data[0]?.month ? "month" : "name")} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} interval={0} />
+                                                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
+                                                                                <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
+                                                                                <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '10px' }} />
+                                                                                {chart.suggestion.series ? (
+                                                                                    chart.suggestion.series.map((s, i) => (
+                                                                                        <Bar key={i} dataKey={s.key} name={s.name} fill={s.color || (i === 0 ? "hsl(var(--primary))" : "#94A3B8")} radius={[4, 4, 0, 0]} />
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                                                                )}
+                                                                            </BarChart>
+                                                                        ) : chart.suggestion.type === 'line' ? (
+                                                                            <LineChart data={chart.data}>
+                                                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                                                <XAxis dataKey={chart.suggestion.xAxis || "month"} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} interval={0} />
+                                                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
+                                                                                <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
+                                                                                <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '10px' }} />
+                                                                                {chart.suggestion.series ? (
+                                                                                    chart.suggestion.series.map((s, i) => (
+                                                                                        <Line key={i} type="monotone" dataKey={s.key} name={s.name} stroke={s.color || (i === 0 ? "hsl(var(--primary))" : "#F87171")} strokeWidth={2} dot={{ r: 3 }} label={i === 0 ? { position: 'top', fontSize: 8, fill: '#64748B' } : false} />
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                                                                                )}
+                                                                                {chart.suggestion.threshold && (
+                                                                                    <ReferenceLine
+                                                                                        y={parseFloat(chart.suggestion.threshold)}
+                                                                                        stroke="#F87171"
+                                                                                        strokeDasharray="5 5"
+                                                                                        label={{ value: `Target: ${chart.suggestion.threshold}`, position: 'right', fill: '#F87171', fontSize: 8, fontWeight: 'bold' }}
+                                                                                    />
+                                                                                )}
+                                                                            </LineChart>
+                                                                        ) : (chart.suggestion.type === 'pie' || chart.suggestion.type === 'donut') ? (
+                                                                            <PieChart>
+                                                                                <Pie
+                                                                                    data={chart.data}
+                                                                                    cx="50%"
+                                                                                    cy="50%"
+                                                                                    innerRadius={chart.suggestion.type === 'donut' ? 40 : 0}
+                                                                                    outerRadius={70}
+                                                                                    paddingAngle={5}
+                                                                                    dataKey="value"
+                                                                                >
+                                                                                    {chart.data.map((entry, index) => (
+                                                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                                    ))}
+                                                                                </Pie>
+                                                                                <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
+                                                                            </PieChart>
+                                                                        ) : null}
+                                                                    </ResponsiveContainer>
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>

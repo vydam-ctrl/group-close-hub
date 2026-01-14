@@ -10,6 +10,11 @@ export interface BizziAIQA {
         columns: string[];
         rows: (string | number)[][];
     };
+    tables?: {
+        title?: string;
+        columns: string[];
+        rows: (string | number)[][];
+    }[];
     insight?: string;
     chartSuggestion?: {
         type: "bar" | "line" | "pie" | "donut";
@@ -19,8 +24,20 @@ export interface BizziAIQA {
         highlight?: string;
         threshold?: string;
         sort?: string;
+        series?: { key: string; name: string; color?: string }[];
     };
     chartData?: any[];
+    charts?: {
+        suggestion: {
+            type: "bar" | "line" | "pie" | "donut";
+            description: string;
+            xAxis?: string;
+            yAxis?: string;
+            threshold?: string;
+            series?: { key: string; name: string; color?: string }[];
+        };
+        data: any[];
+    }[];
 }
 
 export const bizziAIFinancialMock: BizziAIQA[] = [
@@ -78,7 +95,7 @@ export const bizziAIFinancialMock: BizziAIQA[] = [
     {
         id: "q_interest_netprofit_ratio",
         topic: "TASCO Group – Financial Performance 2025",
-        question: "Lọc cho tôi những công ty có tỷ Interest expense / Net profit",
+        question: "Lọc cho tôi những công ty có tỷ lệ Interest expense / Net profit cao",
         answerType: "table",
         tableData: {
             columns: ["Công ty", "Interest / Net Profit (%)"],
@@ -143,6 +160,148 @@ export const bizziAIFinancialMock: BizziAIQA[] = [
             { name: BU_DISPLAY_NAMES.BOT, value: 1300 },
             { name: BU_DISPLAY_NAMES.SAVICO, value: 1050 },
             { name: BU_DISPLAY_NAMES.LAND, value: 900 }
+        ]
+    },
+    {
+        id: "q_material_supply_van_phuc",
+        topic: "Material Supply – Project Tracking",
+        question: "Truy xuất tổng khối lượng và giá trị vật tư đã cấp cho công trình Cầu Vân Phúc (Hà Nội) tính từ đầu năm 2025 đến thời điểm hiện tại.",
+        answerType: "table",
+        tableData: {
+            columns: ["Hạng mục", "Vật tư", "Đơn vị", "Khối lượng đã cấp", "Giá trị (Tỷ VNĐ)"],
+            rows: [
+                ["Trụ cầu", "Thép xây dựng", "Tấn", 120, 2.28],
+                ["Mặt cầu", "Bê tông nhựa", "Tấn", 680, 10.6],
+                ["Móng", "Cát vàng", "m³", 440, 1.32]
+            ]
+        },
+        insight: "Tổng khối lượng và giá trị vật tư cho thấy hạng mục mặt cầu chiếm tỷ trọng chi phí lớn nhất trong giai đoạn thi công hiện tại.",
+        chartSuggestion: {
+            type: "bar",
+            description: "Giá trị vật tư theo hạng mục - Cầu Vân Phúc",
+            xAxis: "Hạng mục",
+            yAxis: "Giá trị (Tỷ VNĐ)"
+        },
+        chartData: [
+            { name: "Trụ cầu", value: 2.28 },
+            { name: "Mặt cầu", value: 10.6 },
+            { name: "Móng", value: 1.32 }
+        ]
+    },
+    {
+        id: "q_material_efficiency_my_dinh",
+        topic: "Material Efficiency – Project Performance",
+        question: "Lập bảng báo cáo hiệu quả vật tư dự án Mỹ Đình - Ba Sao - Bái Đính.",
+        answerType: "table",
+        tableData: {
+            columns: ["Hạng mục", "Vật tư", "Kế hoạch tổng", "% Tiến độ thực tế", "Trạng thái", "Khối lượng thực tế", "Giá trị (Tỷ VNĐ)", "% Hao hụt / Tiết kiệm"],
+            rows: [
+                ["Mặt đường", "Bê tông nhựa", "1.000 tấn", "85%", "Trễ hạn", "820 tấn", 12.8, "+6.5%"],
+                ["Móng", "Cát vàng", "2.000 m³", "90%", "Đúng hạn", "1.700 m³", 2.1, "-5.6%"],
+                ["Trụ", "Thép", "500 tấn", "100%", "Đúng hạn", "560 tấn", 10.3, "+12.0%"]
+            ]
+        },
+        insight: "Hạng mục trụ có mức hao hụt vật tư cao nhất do khối lượng thực tế vượt kế hoạch, trong khi hạng mục móng ghi nhận hiệu quả sử dụng vật tư tốt.",
+        chartSuggestion: {
+            type: "bar",
+            description: "Tỷ lệ Hao hụt (+) / Tiết kiệm (-) theo hạng mục (%)",
+            xAxis: "Hạng mục",
+            yAxis: "% Hao hụt / Tiết kiệm",
+            highlight: "Value > 0"
+        },
+        chartData: [
+            { name: "Mặt đường", value: 6.5 },
+            { name: "Móng", value: -5.6 },
+            { name: "Trụ", value: 12.0 }
+        ]
+    },
+    {
+        id: "q_design_vs_actual_steel",
+        topic: "Design vs Actual – Material Variance",
+        question: "So sánh dữ liệu thực tế tiêu hao với định mức thiết kế cho hạng mục Thép tại Dự án mở rộng cao tốc TP. Hồ Chí Minh - Long Thành.",
+        answerType: "table",
+        tableData: {
+            columns: ["Giai đoạn", "Định mức thiết kế", "Thực tế", "Chênh lệch", "% Chênh lệch", "Nguyên nhân chính"],
+            rows: [
+                ["GĐ 1 – Thi công móng", 180, 195, 15, "+8.3%", "Điều chỉnh thiết kế móng và hao hụt trong quá trình cắt, gia công thép."],
+                ["GĐ 2 – Trụ cầu", 220, 210, -10, "-4.5%", "—"],
+                ["GĐ 3 – Dầm & kết cấu", 120, 140, 20, "+16.7%", "Bổ sung gia cố kết cấu do điều kiện địa chất và yêu cầu tăng hệ số an toàn."]
+            ]
+        },
+        insight: "Các giai đoạn 1 and 3 có mức chênh lệch vượt ngưỡng 5%, phản ánh rủi ro trong kiểm soát định mức và thay đổi thiết kế trong quá trình thi công.",
+        chartSuggestion: {
+            type: "line",
+            description: "Biến động sai lệch tiêu hao thép so với thiết kế (%)",
+            xAxis: "Giai đoạn",
+            yAxis: "% Chênh lệch",
+            threshold: "5%"
+        },
+        chartData: [
+            { month: "GĐ 1", value: 8.3 },
+            { month: "GĐ 2", value: -4.5 },
+            { month: "GĐ 3", value: 16.7 }
+        ]
+    },
+    {
+        id: "q_price_increase_simulation_sand",
+        topic: "Scenario Simulation – Material Price Impact",
+        question: "Chạy kịch bản mô phỏng nếu giá xi măng tăng thêm 5% từ tháng sau, dự báo tác động đến tổng chi phí vật tư và biên lợi nhuận.",
+        answerType: "summary",
+        answerText: "Giá xi măng tăng 5% làm chi phí vật tư tăng tương ứng tại tất cả dự án, dẫn đến biên lợi nhuận giảm từ 0,4% đến 0,5%. Dù mức tăng chi phí tuyệt đối không lớn, tác động cộng dồn có thể ảnh hưởng đáng kể đến hiệu quả danh mục dự án.",
+        tables: [
+            {
+                title: "Table 1 – Material Cost Impact",
+                columns: ["Dự án", "Chi phí xi măng hiện tại (Tỷ)", "Chi phí sau tăng giá (Tỷ)", "Chênh lệch", "% Tăng chi phí"],
+                rows: [
+                    ["Mỹ Đình – Ba Sao – Bái Đính", 2.40, 2.52, "+0.12", "+5.0%"],
+                    ["Cầu Vân Phúc", 1.80, 1.89, "+0.09", "+5.0%"],
+                    ["Cao tốc TP.HCM – Long Thành", 3.20, 3.36, "+0.16", "+5.0%"]
+                ]
+            },
+            {
+                title: "Table 2 – Profit Margin Impact",
+                columns: ["Dự án", "Tổng chi phí vật tư (Trước)", "Tổng chi phí vật tư (Sau)", "Biên LN trước", "Biên LN sau", "Δ Biên LN"],
+                rows: [
+                    ["Mỹ Đình – Ba Sao – Bái Đính", 25.0, 25.12, "18.0%", "17.5%", "-0.5%"],
+                    ["Cầu Vân Phúc", 22.6, 22.69, "16.5%", "16.1%", "-0.4%"],
+                    ["Cao tốc TP.HCM – Long Thành", 30.4, 30.56, "14.0%", "13.5%", "-0.5%"]
+                ]
+            }
+        ],
+        insight: "Hệ thống khuyến nghị rà soát các hợp đồng cung ứng dài hạn để chốt giá hoặc đàm phán lại tiến độ giao hàng nhằm giảm thiểu rủi ro tăng giá vật liệu.",
+        charts: [
+            {
+                suggestion: {
+                    type: "bar",
+                    description: "Material Cost Impact (Billion VND)",
+                    xAxis: "name",
+                    series: [
+                        { key: "before", name: "Before", color: "hsl(var(--primary))" },
+                        { key: "after", name: "After", color: "#94A3B8" }
+                    ]
+                },
+                data: [
+                    { name: "Mỹ Đình", before: 2.40, after: 2.52, increase: "+5.0%" },
+                    { name: "Cầu Vân Phúc", before: 1.80, after: 1.89, increase: "+5.0%" },
+                    { name: "Cao tốc", before: 3.20, after: 3.36, increase: "+5.0%" }
+                ]
+            },
+            {
+                suggestion: {
+                    type: "line",
+                    description: "Profit Margin Impact (%)",
+                    xAxis: "name",
+                    series: [
+                        { key: "marginBefore", name: "Margin Before", color: "hsl(var(--primary))" },
+                        { key: "marginAfter", name: "Margin After", color: "#F87171" }
+                    ]
+                },
+                data: [
+                    { name: "Mỹ Đình", marginBefore: 18.0, marginAfter: 17.5, delta: "-0.5%" },
+                    { name: "Cầu Vân Phúc", marginBefore: 16.5, marginAfter: 16.1, delta: "-0.4%" },
+                    { name: "Cao tốc", marginBefore: 14.0, marginAfter: 13.5, delta: "-0.5%" }
+                ]
+            }
         ]
     }
 ];

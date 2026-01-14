@@ -9,6 +9,11 @@ export interface ChatMessage {
         columns: string[];
         rows: (string | number)[][];
     };
+    tables?: {
+        title?: string;
+        columns: string[];
+        rows: (string | number)[][];
+    }[];
     insight?: string;
     chartSuggestion?: {
         type: "bar" | "line" | "pie" | "donut";
@@ -18,7 +23,20 @@ export interface ChatMessage {
         highlight?: string;
         threshold?: string;
         sort?: string;
+        series?: { key: string; name: string; color?: string }[];
     };
+    chartData?: any[];
+    charts?: {
+        suggestion: {
+            type: "bar" | "line" | "pie" | "donut";
+            description: string;
+            xAxis?: string;
+            yAxis?: string;
+            threshold?: string;
+            series?: { key: string; name: string; color?: string }[];
+        };
+        data: any[];
+    }[];
 }
 
 export const bizziAIQuestions: ChatMessage[] = [
