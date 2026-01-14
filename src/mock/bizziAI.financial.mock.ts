@@ -19,6 +19,7 @@ export interface BizziAIQA {
     chartSuggestion?: {
         type: "bar" | "line" | "pie" | "donut";
         description: string;
+        layout?: "horizontal" | "vertical";
         xAxis?: string;
         yAxis?: string;
         highlight?: string;
@@ -31,6 +32,7 @@ export interface BizziAIQA {
         suggestion: {
             type: "bar" | "line" | "pie" | "donut";
             description: string;
+            layout?: "horizontal" | "vertical";
             xAxis?: string;
             yAxis?: string;
             threshold?: string;
@@ -300,6 +302,68 @@ export const bizziAIFinancialMock: BizziAIQA[] = [
                     { name: "Mỹ Đình", marginBefore: 18.0, marginAfter: 17.5, delta: "-0.5%" },
                     { name: "Cầu Vân Phúc", marginBefore: 16.5, marginAfter: 16.1, delta: "-0.4%" },
                     { name: "Cao tốc", marginBefore: 14.0, marginAfter: 13.5, delta: "-0.5%" }
+                ]
+            }
+        ]
+    },
+    {
+        id: "q_inventory_shortage_risk_asphalt",
+        topic: "Inventory Risk – Material Shortage Analysis",
+        question: "Hãy liệt kê các dự án có tồn kho Bê tông nhựa hiện tại không đủ đáp ứng tiến độ thi công dự kiến trong 2 tuần tới. Đồng thời hãy phân tích nếu hàng đang cấp về bị trễ 3 ngày thì dự án nào sẽ bị dừng thi công đầu tiên?",
+        answerType: "summary",
+        answerText: "Tình trạng tồn kho Bê tông nhựa hiện tại trên toàn hệ thống đang ở mức báo động đối với một số dự án trọng điểm.",
+        tables: [
+            {
+                title: "Tình trạng tồn kho Bê tông nhựa so với nhu cầu 2 tuần tới",
+                columns: ["Dự án", "Tồn kho hiện tại (tấn)", "Nhu cầu 2 tuần tới (tấn)", "Chênh lệch (tấn)", "Số ngày còn thi công", "Trạng thái"],
+                rows: [
+                    ["Mỹ Đình – Ba Sao – Bái Đính", 180, 300, -120, 8, "Thiếu"],
+                    ["Cầu Vân Phúc", 90, 150, -60, 9, "Thiếu"],
+                    ["Cao tốc TP.HCM – Long Thành", 60, 120, -60, 7, "Thiếu"]
+                ]
+            },
+            {
+                title: "Phân tích rủi ro dừng thi công khi hàng cấp về trễ 3 ngày (Scenario Analysis – Delivery Delay +3 Days)",
+                columns: ["Dự án", "Tồn kho + hàng đang về (tấn)", "Nhu cầu đến ETA (tấn)", "Ngày dự kiến dừng", "Thứ tự rủi ro"],
+                rows: [
+                    ["Cao tốc TP.HCM – Long Thành", "60 + 150", 90, 45735, 1],
+                    ["Mỹ Đình – Ba Sao – Bái Đính", "180 + 200", 210, 45736, 2],
+                    ["Cầu Vân Phúc", "90 + 100", 135, 45738, 3]
+                ]
+            }
+        ],
+        insight: "Tất cả các dự án đều đang thiếu tồn kho Bê tông nhựa so với nhu cầu 2 tuần tới. Trong kịch bản hàng cấp về bị trễ 3 ngày, Cao tốc TP.HCM – Long Thành là dự án có rủi ro cao nhất và sẽ dừng thi công đầu tiên do mức tồn kho thấp và số ngày duy trì thi công ngắn nhất.",
+        charts: [
+            {
+                suggestion: {
+                    type: "bar",
+                    description: "Inventory vs 2-week Demand (Tons)",
+                    xAxis: "name",
+                    series: [
+                        { key: "current", name: "Tồn kho hiện tại", color: "hsl(var(--primary))" },
+                        { key: "demand", name: "Nhu cầu 2 tuần", color: "#F87171" }
+                    ]
+                },
+                data: [
+                    { name: "Mỹ Đình", current: 180, demand: 300 },
+                    { name: "Cầu Vân Phúc", current: 90, demand: 150 },
+                    { name: "Cao tốc", current: 60, demand: 120 }
+                ]
+            },
+            {
+                suggestion: {
+                    type: "bar",
+                    layout: "horizontal",
+                    description: "Days until Stop (Lower is Higher Risk)",
+                    xAxis: "name",
+                    series: [
+                        { key: "days", name: "Số ngày còn lại", color: "#F87171" }
+                    ]
+                },
+                data: [
+                    { name: "Cao tốc", days: 7 },
+                    { name: "Mỹ Đình", days: 8 },
+                    { name: "Cầu Vân Phúc", days: 9 }
                 ]
             }
         ]

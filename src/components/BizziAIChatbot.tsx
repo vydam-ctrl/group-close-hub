@@ -51,6 +51,7 @@ interface Message {
     chartSuggestion?: {
         type: string;
         description: string;
+        layout?: "horizontal" | "vertical";
         xAxis?: string;
         yAxis?: string;
         highlight?: string;
@@ -61,8 +62,9 @@ interface Message {
     chartData?: any[];
     charts?: {
         suggestion: {
-            type: string;
+            type: "bar" | "line" | "pie" | "donut";
             description: string;
+            layout?: "horizontal" | "vertical";
             xAxis?: string;
             yAxis?: string;
             threshold?: string;
@@ -305,18 +307,27 @@ export function BizziAIChatbot({ context = 'consolidated' }: BizziAIChatbotProps
                                                                 <div className="h-[200px] w-full">
                                                                     <ResponsiveContainer width="100%" height="100%">
                                                                         {chart.suggestion.type === 'bar' ? (
-                                                                            <BarChart data={chart.data}>
-                                                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                                                <XAxis dataKey={chart.suggestion.xAxis || (chart.data[0]?.month ? "month" : "name")} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} interval={0} />
-                                                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
+                                                                            <BarChart data={chart.data} layout={chart.suggestion.layout === 'horizontal' ? 'vertical' : 'horizontal'}>
+                                                                                <CartesianGrid strokeDasharray="3 3" vertical={chart.suggestion.layout === 'horizontal'} stroke="#E2E8F0" horizontal={chart.suggestion.layout !== 'horizontal'} />
+                                                                                {chart.suggestion.layout === 'horizontal' ? (
+                                                                                    <>
+                                                                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
+                                                                                        <YAxis dataKey={chart.suggestion.xAxis || (chart.data[0]?.month ? "month" : "name")} type="category" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} interval={0} width={80} />
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <XAxis dataKey={chart.suggestion.xAxis || (chart.data[0]?.month ? "month" : "name")} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} interval={0} />
+                                                                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748B' }} />
+                                                                                    </>
+                                                                                )}
                                                                                 <Tooltip contentStyle={{ fontSize: '10px', borderRadius: '8px' }} />
                                                                                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '10px' }} />
                                                                                 {chart.suggestion.series ? (
                                                                                     chart.suggestion.series.map((s, i) => (
-                                                                                        <Bar key={i} dataKey={s.key} name={s.name} fill={s.color || (i === 0 ? "hsl(var(--primary))" : "#94A3B8")} radius={[4, 4, 0, 0]} />
+                                                                                        <Bar key={i} dataKey={s.key} name={s.name} fill={s.color || (i === 0 ? "hsl(var(--primary))" : "#94A3B8")} radius={chart.suggestion.layout === 'horizontal' ? [0, 4, 4, 0] : [4, 4, 0, 0]} />
                                                                                     ))
                                                                                 ) : (
-                                                                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                                                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={chart.suggestion.layout === 'horizontal' ? [0, 4, 4, 0] : [4, 4, 0, 0]} />
                                                                                 )}
                                                                             </BarChart>
                                                                         ) : chart.suggestion.type === 'line' ? (
@@ -392,7 +403,7 @@ export function BizziAIChatbot({ context = 'consolidated' }: BizziAIChatbotProps
                         <div className="p-4 bg-white border-t border-border space-y-3">
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Common Questions</p>
                             <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
-                                {activeQuestions.slice(0, 2).map((q) => (
+                                {activeQuestions.slice(-2).map((q) => (
                                     <button
                                         key={q.id}
                                         onClick={() => handleSelectQuestion(q as any)}
